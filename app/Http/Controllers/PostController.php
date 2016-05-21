@@ -17,7 +17,7 @@ class PostController extends Controller
     public function index()
     {
         //Create a Varaible and store all the blog posts that are in the database
-        $posts=Post::all();
+        $posts=Post::orderBy('id','desc')->paginate(10);
 
         //return a view and pass the above variable
         return view('posts.index')->with ('posts',$posts);
@@ -45,6 +45,7 @@ class PostController extends Controller
         //validate the Data
       $this->validate($request,array(
         'title'=>'required|max:255',
+        'slug' => 'required|alpha_dash|min:5|max:255|unique:posts,slug',
         'body' =>'required'
         ));
 
@@ -52,6 +53,7 @@ class PostController extends Controller
       $post = new Post;
 
       $post->title = $request->title;
+      $post->slug = $request->slug;
       $post->body = $request->body;
 
       $post->save();
@@ -101,7 +103,11 @@ class PostController extends Controller
     public function update(Request $request, $id)
     {
         //Validate the New Updated Data
-        $this->validate($request,['title'=>'required | max:255', 'body' => 'required']);
+        $this->validate($request,[
+            'title'=>'required | max:255', 
+            'slug' => 'required|alpha_dash|min:5|max:255|unique:posts,slug', 
+            'body' => 'required'
+            ]);
 
 
         //Store Data in the DB
@@ -109,6 +115,7 @@ class PostController extends Controller
         $post = Post::find($id);
 
         $post->title = $request->input('title');
+        $post->slug = $request->input('slug');
         $post->body = $request->input('body');
 
         $post->save();
