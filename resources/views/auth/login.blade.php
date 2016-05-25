@@ -22,6 +22,7 @@
 			<br> <!-- LINE Breaker -->
 			{{ Form::submit('Login', ['class' => 'btn btn-primary btn-lg btn-block' ]) }}	
 
+			<p><a href="{{ url('password/reset') }}">Forgot My Password</a></p>
 
 			{!! Form::close() !!}
 		</div>
