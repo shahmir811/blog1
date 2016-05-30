@@ -10,7 +10,7 @@ class Category extends Model
 
     public function posts()
     {
-    	return $table->hasMany('App\Post');
+    	return $this->hasMany('App\Post');
     }
 
 
