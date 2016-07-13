@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Post;
+use App\Tag;
 use App\Category;
 use  Session;
 
@@ -14,11 +15,7 @@ class PostController extends Controller
     public function __construct(){
         $this->middleware('auth');
     }
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function index()
     {
         //Create a Varaible and store all the blog posts that are in the database
@@ -29,24 +26,16 @@ class PostController extends Controller
 
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
         $categories = Category::all();
 
-        return view ('posts.create')->with('categories', $categories);
+        $tags = Tag::all();
+
+        return view ('posts.create')->with('categories', $categories)->with('tags', $tags);
      }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+
     public function store(Request $request)
     {
         //validate the Data
@@ -67,6 +56,12 @@ class PostController extends Controller
 
       $post->save();
 
+        if(isset($request->tags)){
+            $post->tags()->sync($request->tags);
+        }else{
+            $post->tags()->sync([]);
+        }
+
       //Redirect to another page
 
       Session::flash('success','The Blog Post was Succesffuly saved !!!');
@@ -74,49 +69,41 @@ class PostController extends Controller
       return redirect()->route('posts.show', $post->id);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+ 
     public function show($id)
     {
         $post = Post::find($id);
         return view('posts.show')->with ('post',$post);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
     public function edit($id)
     {
         //Find post in the DB and store it in the variable
         $post = Post::find($id); //Find the individual Post1
-
         $categories = Category::all();
         $cats = [];
 
         foreach ($categories as $category){
             $cats[$category->id]= $category->name;
         }
-        
 
+        $tags = Tag::lists('name', 'id'); //replaces the below code
+        
+        /*
+        $tags = Tag::all();
+        $tags2 = [];
+
+        foreach ($tags as $tag) {
+            $tags2[$tag->id] = $tag->name;
+        }
+        */
         //Return a view and pass the variable
-        return view('posts.edit')->with('post',$post)->with('categories',$cats);
+        return view('posts.edit')->with('post',$post)->with('categories',$cats)->with('tags', $tags);
 
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
     public function update(Request $request, $id)
     {
         $post=Post::find($id);
@@ -151,6 +138,13 @@ class PostController extends Controller
 
         $post->save();
 
+        if(isset($request->tags)){
+            $post->tags()->sync($request->tags);
+        }else{
+            $post->tags()->sync([]);
+        }
+
+
         //Set Flash Data with Success Message
         Session::flash('success','Post is successfully updated');
 
@@ -159,15 +153,11 @@ class PostController extends Controller
 
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
     public function destroy($id)
     {
         $post = Post::find($id);
+        $post->tags()->detach();
 
         $post->delete();
 
