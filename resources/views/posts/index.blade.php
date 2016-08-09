@@ -37,7 +37,7 @@
 						<tr>						   <!-- Table Row -->
 							<th> {{ $post->id }} </th> <!-- The output of the ID Column will be bolded -->
 							<td> {{ $post->title}} </td>
-							<td> {{ substr($post->body, 0, 20) }}{{ strlen($post->body) > 20 ? "..." : "" }} </td>
+							<td> {{ substr(strip_tags($post->body), 0, 30) }}{{ strlen(strip_tags($post->body)) > 30 ? "..." : "" }} </td>
 							<td> {{ date('M j, Y', strtotime($post->created_at)) }} </td>
 							<td> <a href="{{ route('posts.show', $post->id) }} " class="btn btn-default btn-sm">View</a> <a href=" {{ route('posts.edit', $post->id) }}" class="btn btn-default btn-sm">Edit</a> </td>
 							
