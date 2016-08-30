@@ -7,7 +7,11 @@ use App\Http\Requests;
 use App\Post;
 use App\Tag;
 use App\Category;
-use  Session;
+use Session;
+use Purifier;
+use Image;
+use Storage;
+
 
 class PostController extends Controller
 {
@@ -43,7 +47,8 @@ class PostController extends Controller
         'title'        => 'required|max:255',
         'slug'         => 'required|alpha_dash|min:5|max:255|unique:posts,slug',
         'category_id'  => 'required|integer',
-        'body'         => 'required'
+        'body'         => 'required',
+        'featured_image' => 'sometimes|image'
         ));
 
       //Store Data in the Database
@@ -52,7 +57,20 @@ class PostController extends Controller
       $post->title       = $request->title;
       $post->slug        = $request->slug;
       $post->category_id = $request->category_id;
-      $post->body        = $request->body;
+      $post->body        = Purifier::clean($request->body);
+
+      //Save Image in Public/images folder
+      if($request->hasFile('featured_image'))
+      {
+        $image    = $request->file('featured_image'); //Grab the image file
+        $filename = time() . '.' . $image->getClientOriginalExtension(); //it will store the file as timestamp + imagename + fileextention
+
+        $location = public_path('images/'. $filename); //Store in the public/images folder
+        Image::make($image)->resize(800,400)->save($location);
+
+        $post->image = $filename;
+
+      }
 
       $post->save();
 
@@ -108,24 +126,15 @@ class PostController extends Controller
     {
         $post=Post::find($id);
 
-        if ( $request->input('slug') == $post->slug ) {
-            
-             $this->validate($request,[
-            'title'         =>'required | max:255',
-            'category_id'   => 'required|integer', 
-            'body'          => 'required'
-            ]);
-
-        }
-        else{
         //Validate the New Updated Data
         $this->validate($request,[
             'title'         =>'required | max:255', 
-            'slug'          => 'required|alpha_dash|min:5|max:255|unique:posts,slug', 
+            'slug'          => "required|alpha_dash|min:5|max:255|unique:posts,slug,$id", 
             'category_id'   => 'required|integer',
-            'body'          => 'required'
+            'body'          => 'required',
+            'featured_image'=> 'sometimes|image' 
             ]);
-        }
+
 
         //Store Data in the DB
 
@@ -134,7 +143,25 @@ class PostController extends Controller
         $post->title        = $request->input('title');
         $post->slug         = $request->input('slug');
         $post->category_id  = $request->input('category_id');
-        $post->body         = $request->input('body');
+        $post->body         = Purifier::clean($request->input('body'));
+
+        if($request->hasFile('featured_image')){
+            //Add new Photo
+            $image    = $request->file('featured_image'); //Grab the image file
+            $filename = time() . '.' . $image->getClientOriginalExtension(); //it will store the file as timestamp + imagename + fileextention
+
+            $location = public_path('images/'. $filename); //Store in the public/images folder
+            Image::make($image)->resize(800,400)->save($location);
+
+            $oldFileName = $post->image; //Grab the old File Name
+
+            //Update Database
+            $post->image = $filename; //Stores the Update FileName in the Database
+
+            //Delete old photo
+            Storage::delete($oldFileName);
+
+        }
 
         $post->save();
 
@@ -158,6 +185,7 @@ class PostController extends Controller
     {
         $post = Post::find($id);
         $post->tags()->detach();
+        Store::delete($post->image);        
 
         $post->delete();
 

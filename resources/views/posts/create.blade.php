@@ -25,7 +25,7 @@
 			<h1>Create New Post</h1>
 			<hr>
 
-			{!! Form::open(array('route' => 'posts.store', 'data-parsley-validate' => '')) !!}
+			{!! Form::open(array('route' => 'posts.store', 'data-parsley-validate' => '', 'files' => true)) !!}
     			{{ Form::label('title','Title:') }}
     			{{ Form::text('title', null, array('class' => 'form-control', 'required' => '', 'maxlength' => '255')) }}	
 
@@ -49,6 +49,9 @@
                     @endforeach 
 
                 </select>
+
+                {{ Form::label('featured_image', 'Upload Featured Image:') }}
+                {{ Form::file('featured_image') }}
 
 
     			{{ Form::label('body','Post Body') }}
